@@ -107,12 +107,13 @@ class FCBlock(MetaModule):
             for j, sublayer in enumerate(layer):
                 if isinstance(sublayer, BatchLinear):
                     x = sublayer(x, params=get_subdict(subdict, '%d' % j))
+                    activations['_'.join((str(sublayer.__class__), "%d" % i))] = x * 30
                 else:
                     x = sublayer(x)
-
+                    activations['_'.join((str(sublayer.__class__), "%d" % i))] = x
                 if retain_grad:
                     x.retain_grad()
-                activations['_'.join((str(sublayer.__class__), "%d" % i))] = x
+#                 activations['_'.join((str(sublayer.__class__), "%d" % i))] = x
         return activations
 
 
@@ -146,7 +147,8 @@ class SingleBVPNet(MetaModule):
 
         # Enables us to compute gradients w.r.t. coordinates
         coords_org = model_input['coords'].clone().detach().requires_grad_(True)
-        coords = coords_org
+        latent = model_input['latent']
+        coords = torch.cat([coords_org, latent], dim=1)
 
         # various input processing methods for different applications
         if self.image_downsampling.downsample:
@@ -163,7 +165,8 @@ class SingleBVPNet(MetaModule):
         '''Returns not only model output, but also intermediate activations.'''
         coords = model_input['coords'].clone().detach().requires_grad_(True)
         activations = self.net.forward_with_activations(coords)
-        return {'model_in': coords, 'model_out': activations.popitem(), 'activations': activations}
+#         return {'model_in': coords, 'model_out': activations.popitem(), 'activations': activations}
+        return {'model_in': coords, 'activations': activations}
 
 
 class PINNet(nn.Module):

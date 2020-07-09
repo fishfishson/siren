@@ -130,6 +130,65 @@ class ConvolutionalNeuralProcessImplicit2DHypernet(nn.Module):
         for param in self.encoder.parameters():
             param.requires_grad = False
 
+            
+class HyperNetwork3D(nn.Module):
+    def __init__(self, hyper_in_features, hyper_hidden_layers, hyper_hidden_features, hypo_module):
+        super().__init__()
+
+        hypo_parameters = hypo_module.meta_named_parameters()
+
+        self.names = []
+        self.nets = nn.ModuleList()
+        self.param_shapes = []
+        for name, param in hypo_parameters:
+            self.names.append(name)
+            self.param_shapes.append(param.size())
+
+            hn = modules.FCBlock(in_features=hyper_in_features, out_features=int(torch.prod(torch.tensor(param.size()))),
+                                 num_hidden_layers=hyper_hidden_layers, hidden_features=hyper_hidden_features,
+                                 outermost_linear=True, nonlinearity='relu')
+            self.nets.append(hn)
+
+            if 'weight' in name:
+                self.nets[-1].net[-1].apply(lambda m: hyper_weight_init(m, param.size()[-1]))
+            elif 'bias' in name:
+                self.nets[-1].net[-1].apply(lambda m: hyper_bias_init(m))
+
+    def forward(self, z):
+        params = OrderedDict()
+        for idx, (name, net, param_shape) in enumerate(zip(self.names, self.nets, self.param_shapes)):
+            batch_param_shape = (-1,) + param_shape
+            params[name] = net(z).reshape(batch_param_shape)
+        return params
+
+    
+class Implicit3DHypernet(nn.Module):
+    def __init__(self, in_features, out_features, latent_dim, hyper_hidden_layers):
+        super().__init__()
+        self.hypo_net = modules.SingleBVPNet(out_features=out_features, type='sine',
+                                             in_features=3)
+        self.hyper_net = HyperNetwork3D(hyper_in_features=latent_dim, 
+                                        hyper_hidden_layers=hyper_hidden_layers, 
+                                        hyper_hidden_features=256,
+                                        hypo_module=self.hypo_net)
+    
+    def forward(self, model_input):
+        embedding = model_input['embedding']
+        hypo_params = self.hyper_net(embedding)
+        model_output = self.hypo_net(model_input, params=hypo_params)
+
+        return {'model_in': model_output['model_in'], 'model_out': model_output['model_out'], 'latent_vec': embedding,
+                'hypo_params': hypo_params}
+
+    def get_hypo_net_weights(self, model_input):
+        embedding = model_input['embedding']
+        hypo_params = self.hyper_net(embedding)
+        return hypo_params, embedding
+
+    def freeze_hypernet(self):
+        for param in self.hyper_net.parameters():
+            param.requires_grad = False
+    
 
 ############################
 # Initialization schemes

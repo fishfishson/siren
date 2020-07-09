@@ -10,6 +10,7 @@ import torch
 import modules, utils
 import sdf_meshing
 import configargparse
+import torch
 
 p = configargparse.ArgumentParser()
 p.add('-c', '--config_filepath', required=False, is_config_file=True, help='Path to config file.')
@@ -20,33 +21,38 @@ p.add_argument('--experiment_name', type=str, required=True,
 
 # General training options
 p.add_argument('--batch_size', type=int, default=16384)
-p.add_argument('--checkpoint_path', default=None, help='Checkpoint to trained model.')
-
+p.add_argument('--model_ckpt_path', default=None, help='Checkpoint to trained model.')
+p.add_argument('--latent_ckpt_path', default=None)
 p.add_argument('--model_type', type=str, default='sine',
                help='Options are "sine" (all sine activations) and "mixed" (first layer sine, other layers tanh)')
 p.add_argument('--mode', type=str, default='mlp',
                help='Options are "mlp" or "nerf"')
+p.add_argument('--latent_dim', type=int, default=64)
+p.add_argument('--idx', type=int, default=0)
 
 opt = p.parse_args()
 
 
 class SDFDecoder(torch.nn.Module):
-    def __init__(self):
+    def __init__(self, idx):
         super().__init__()
         # Define the model.
-        if opt.mode == 'mlp':
-            self.model = modules.SingleBVPNet(type=opt.model_type, final_layer_factor=1, in_features=3)
-        elif opt.mode == 'nerf':
-            self.model = modules.SingleBVPNet(type='relu', mode='nerf', final_layer_factor=1, in_features=3)
-        self.model.load_state_dict(torch.load(opt.checkpoint_path))
+        self.model = modules.SingleBVPNet(type=opt.model_type, final_layer_factor=1, in_features=opt.latent_dim + 3)
+        self.model.load_state_dict(torch.load(opt.model_ckpt_path))
+        self.embed = torch.nn.Embedding(20, opt.latent_dim)
+        self.embed.load_state_dict(torch.load(opt.latent_ckpt_path))
+        self.embed.cuda()
         self.model.cuda()
+        self.idx = torch.tensor(idx).cuda()
 
     def forward(self, coords):
-        model_in = {'coords': coords}
+        num_points = coords.shape[0]
+        lat_vec = self.embed(self.idx).unsqueeze(0).repeat(num_points, 1)
+        model_in = {'coords': coords, 'latent': lat_vec}
         return self.model(model_in)['model_out']
 
 
-sdf_decoder = SDFDecoder()
+sdf_decoder = SDFDecoder(opt.idx)
 
 root_path = os.path.join(opt.logging_root, opt.experiment_name)
 utils.cond_mkdir(root_path)
