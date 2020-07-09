@@ -386,7 +386,8 @@ class WaveSource(Dataset):
             self.counter = 0
 
         return {'coords': coords}, {'source_boundary_values': boundary_values, 'dirichlet_mask': dirichlet_mask,
-                                    'squared_slowness': squared_slowness, 'squared_slowness_grid': squared_slowness_grid}
+                                    'squared_slowness': squared_slowness,
+                                    'squared_slowness_grid': squared_slowness_grid}
 
 
 class PointCloud(Dataset):
@@ -443,7 +444,7 @@ class PointCloud(Dataset):
         return {'coords': torch.from_numpy(coords).float()}, {'sdf': torch.from_numpy(sdf).float(),
                                                               'normals': torch.from_numpy(normals).float()}
 
-    
+
 class Mesh(Dataset):
     def __init__(self, mesh_dir, on_surface_points, off_surface_points, near_sdf_use=False):
         super().__init__()
@@ -472,28 +473,27 @@ class Mesh(Dataset):
         on_surface_coords = verts[on_rand_idcs, :]
         on_surface_normals = normals[on_rand_idcs, :]
         on_surface_sdfs = np.zeros((self.on_surface_points, 1))
-     
+
         off_surface_coords = np.random.uniform(-1, 1, size=(self.off_surface_points, 3))
         off_surface_normals = np.ones((self.off_surface_points, 3)) * -1
         off_surface_sdfs = np.ones((self.off_surface_points, 1)) * -1
-
-        if self.near_sdf_use:
-            near_surface_coords = on_surface_coords + np.random.normal(scale=0.005, size=(self.on_surface_points // 2, 3))
-            near_surface_normals = np.ones((self.on_surface_points // 2, 3)) * -1
-            near_surface_sdfs = mesh_to_sdf.mesh_to_sdf(unit_mesh, near_surface_coords)
 
         coords = np.concatenate([on_surface_coords, off_surface_coords], axis=0)
         normals = np.concatenate([on_surface_normals, off_surface_normals], axis=0)
         sdfs = np.concatenate([on_surface_sdfs, off_surface_sdfs], axis=0)
 
         if self.near_sdf_use:
+            near_surface_coords = on_surface_coords + np.random.normal(scale=0.005,
+                                                                       size=(self.on_surface_points // 2, 3))
+            near_surface_normals = np.ones((self.on_surface_points // 2, 3)) * -1
+            near_surface_sdfs = mesh_to_sdf.mesh_to_sdf(unit_mesh, near_surface_coords)
             coords = np.concatenate([coords, near_surface_coords], axis=0)
             normals = np.concatenate([normals, near_surface_normals], axis=0)
             sdfs = np.concatenate([sdfs, near_surface_sdfs], axis=0)
 
         return torch.from_numpy(coords).float(), torch.from_numpy(sdfs).float(), torch.from_numpy(normals).float(), idx
 
-    
+
 class Video(Dataset):
     def __init__(self, path_to_video):
         super().__init__()
@@ -794,7 +794,6 @@ class ImageGeneralizationWrapper(torch.utils.data.Dataset):
         spatial_img, img, gt_dict = self.dataset.get_item_small(idx)
         in_dict = self.get_generalization_in_dict(spatial_img, img, idx)
         return in_dict, gt_dict
-
 
 
 # in_folder: where to find the data (train, val, test)

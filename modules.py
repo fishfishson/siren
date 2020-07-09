@@ -148,7 +148,7 @@ class SingleBVPNet(MetaModule):
         # Enables us to compute gradients w.r.t. coordinates
         coords_org = model_input['coords'].clone().detach().requires_grad_(True)
         latent = model_input['latent']
-        coords = torch.cat([coords_org, latent], dim=1)
+        coords = coords_org
 
         # various input processing methods for different applications
         if self.image_downsampling.downsample:
@@ -158,6 +158,7 @@ class SingleBVPNet(MetaModule):
         elif self.mode == 'nerf':
             coords = self.positional_encoding(coords)
 
+        coords = torch.cat([coords, latent], dim=1)
         output = self.net(coords, get_subdict(params, 'net'))
         return {'model_in': coords_org, 'model_out': output}
 
