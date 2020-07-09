@@ -23,10 +23,10 @@ p.add_argument('--experiment_name', type=str, required=True,
                help='Name of subdirectory in logging_root where summaries and checkpoints will be saved.')
 
 # General training options
-p.add_argument('--batch_size', type=int, default=5)
+p.add_argument('--batch_size', type=int, default=10)
 p.add_argument('--model_lr', type=float, default=1e-4, help='learning rate. default=5e-5')
 p.add_argument('--lat_lr', type=float, default=1e-3, help='learning rate. default=5e-5')
-p.add_argument('--num_epochs', type=int, default=1000,
+p.add_argument('--num_epochs', type=int, default=2000,
                help='Number of epochs to train for.')
 p.add_argument('--lat_coeff', type=float, default=1.)
 
@@ -42,10 +42,10 @@ p.add_argument('--point_cloud_path', type=str, default='/home/sitzmann/data/poin
 
 p.add_argument('--checkpoint_path', default=None, help='Checkpoint to trained model.')
 
-p.add_argument('--on_surface_points', type=int, default=5000)
-p.add_argument('--off_surface_points', type=int, default=5000)
-p.add_argument('--latent_dim', type=int, default=64)
-p.add_argument('--batch_split', type=int, default=8)
+p.add_argument('--on_surface_points', type=int, default=8000)
+p.add_argument('--off_surface_points', type=int, default=8000)
+p.add_argument('--latent_dim', type=int, default=128)
+p.add_argument('--batch_split', type=int, default=10)
 p.add_argument('--clip_grad', type=float, default=1.)
 p.add_argument('--shuffle_batch', type=bool, default=False)
 
