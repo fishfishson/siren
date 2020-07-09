@@ -65,7 +65,6 @@ def main(opt):
 
     # Define the loss
     sdf_loss = loss_functions.sdf
-    mse_loss = torch.nn.MSELoss()
     # summary_fn = utils.write_sdf_summary
 
     root_path = os.path.join(opt.logging_root, opt.experiment_name)
@@ -95,7 +94,7 @@ def main(opt):
         )
 
     num_data = len(sdf_dataset)
-    lat_vecs = torch.nn.Embedding(num_data, opt.latent_dim, max_norm=1)
+    lat_vecs = torch.nn.Embedding(num_data, opt.latent_dim)
     torch.nn.init.normal_(lat_vecs.weight.data, 0, np.sqrt(1 / 3))
     lat_vecs.cuda()
 
@@ -157,7 +156,7 @@ def main(opt):
                 batch_loss = 0
 
                 sdf_losses = sdf_loss(model_output, gt)
-                lat_loss = opt.lat_coeff * mse_loss(batch_vecs, torch.zeros_like(batch_vecs).cuda())
+                lat_loss = opt.lat_coeff * torch.mean(batch_vecs ** 2)
 
                 batch_loss += lat_loss
 
