@@ -33,24 +33,30 @@ class SDFDecoder(torch.nn.Module):
     def __init__(self, opt):
         super().__init__()
         # Define the model.
+        all_model = torch.load(os.path.join(opt.logging_root, opt.experiment_name, 'checkpoints/all_final.path'))
         self.model = modules.SingleBVPNet(type=opt.model_type, out_features=1, in_features=opt.latent_dim + 3)
-        self.model.load_state_dict(torch.load(opt.model_ckpt_path))
+        self.model.load_state_dict(all_model['model'])
         self.embed = torch.nn.Embedding(opt.num_data, opt.latent_dim)
-        self.embed.load_state_dict(torch.load(opt.latent_ckpt_path))
+        self.embed.load_state_dict(torch.load(all_model['lat_vecs']))
         self.embed.cuda()
         self.model.cuda()
+        self.idx = None
 
-    def forward(self, coords, idx):
+    def load_idx(self, idx):
+        self.idx = torch.tensor(idx).cuda()
+
+    def forward(self, coords):
         num_points = coords.shape[0]
-        lat_vec = self.embed(idx).unsqueeze(0).repeat(num_points, 1)
+        lat_vec = self.embed(self.idx).unsqueeze(0).repeat(num_points, 1)
         model_in = {'coords': coords, 'latent': lat_vec}
         return self.model(model_in)['model_out']
 
 
 def main(opt):
     for i in range(opt.num_data):
-        sdf_decoder = partial(SDFDecoder(opt), idx=torch.tensor(i))
-        root_path = os.path.join(opt.logging_root, opt.experiment_name)
+        sdf_decoder = SDFDecoder(opt)
+        sdf_decoder.load_idx(i)
+        root_path = os.path.join(opt.logging_root, opt.experiment_name, 'rec')
         utils.cond_mkdir(root_path)
         sdf_meshing.create_mesh(sdf_decoder, os.path.join(root_path, 'rec_{}'.format(i)), N=256)
 
