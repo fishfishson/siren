@@ -30,7 +30,7 @@ def get_mgrid(sidelen, dim=2):
         pixel_coords[0, :, :, 1] = pixel_coords[0, :, :, 1] / (sidelen[1] - 1)
     elif dim == 3:
         pixel_coords = np.stack(np.mgrid[:sidelen[0], :sidelen[1], :sidelen[2]], axis=-1)[None, ...].astype(np.float32)
-        pixel_coords[..., 0] = pixel_coords[..., 0] / max(sidelen[0] - 1, 1)
+        pixel_coords[..., 0] = pixel_coords[..., 0] / (sidelen[0] - 1)
         pixel_coords[..., 1] = pixel_coords[..., 1] / (sidelen[1] - 1)
         pixel_coords[..., 2] = pixel_coords[..., 2] / (sidelen[2] - 1)
     else:

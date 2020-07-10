@@ -1,6 +1,6 @@
 '''From the DeepSDF repository https://github.com/facebookresearch/DeepSDF
 '''
-#!/usr/bin/env python3
+# !/usr/bin/env python3
 
 import logging
 import numpy as np
@@ -11,7 +11,7 @@ import torch
 
 
 def create_mesh(
-    decoder, filename, N=256, max_batch=64 ** 3, offset=None, scale=None
+        decoder, filename, N=256, max_batch=64 ** 3, offset=None, scale=None
 ):
     start = time.time()
     ply_filename = filename
@@ -45,13 +45,13 @@ def create_mesh(
 
     while head < num_samples:
         print(head)
-        sample_subset = samples[head : min(head + max_batch, num_samples), 0:3].cuda()
+        sample_subset = samples[head: min(head + max_batch, num_samples), 0:3].cuda()
 
-        samples[head : min(head + max_batch, num_samples), 3] = (
+        samples[head: min(head + max_batch, num_samples), 3] = (
             decoder(sample_subset)
-            .squeeze()#.squeeze(1)
-            .detach()
-            .cpu()
+                .squeeze()  # .squeeze(1)
+                .detach()
+                .cpu()
         )
         head += max_batch
 
@@ -72,12 +72,12 @@ def create_mesh(
 
 
 def convert_sdf_samples_to_ply(
-    pytorch_3d_sdf_tensor,
-    voxel_grid_origin,
-    voxel_size,
-    ply_filename_out,
-    offset=None,
-    scale=None,
+        pytorch_3d_sdf_tensor,
+        voxel_grid_origin,
+        voxel_size,
+        ply_filename_out,
+        offset=None,
+        scale=None,
 ):
     """
     Convert sdf samples to .ply
