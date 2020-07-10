@@ -25,6 +25,7 @@ p.add_argument('--experiment_name', type=str, required=True,
 p.add_argument('--model_type', type=str, default='sine',
                help='Options are "sine" (all sine activations) and "mixed" (first layer sine, other layers tanh)')
 p.add_argument('--latent_dim', type=int, default=128)
+p.add_argument('--num_data', type=int, default=20)
 
 opt = p.parse_args()
 
