@@ -54,6 +54,18 @@ def lin2img(tensor, image_resolution=None):
     return tensor.permute(0, 2, 1).view(batch_size, channels, height, width)
 
 
+def lin2img_shape(tensor, image_resolution=None):
+    num_samples, channels = tensor.shape
+    if image_resolution is None:
+        width = np.sqrt(num_samples).astype(int)
+        height = width
+    else:
+        height = image_resolution[0]
+        width = image_resolution[1]
+
+    return tensor.permute(1, 0).view(channels, height, width)
+
+
 def grads2img(gradients):
     mG = gradients.detach().squeeze(0).permute(-2, -1, -3).cpu()
 

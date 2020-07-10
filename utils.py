@@ -289,28 +289,29 @@ def write_sdf_summary_shape(model, writer, epoch, prefix):
     model.eval()
 
     with torch.no_grad():
-        yz_slice_coords = torch.cat((torch.zeros_like(slice_coords_2d[:, :1]),
-                                     slice_coords_2d), dim=-1)[None, ...].cuda()
+        yz_slice_coords = torch.cat((torch.zeros_like(slice_coords_2d[:, :1]), slice_coords_2d), dim=-1).cuda()
 
         yz_model_out = model(yz_slice_coords)
-        sdf_values = dataio.lin2img(yz_model_out).squeeze().cpu().numpy()
+        sdf_values = dataio.lin2img_shape(yz_model_out).squeeze().cpu().numpy()
         fig = make_contour_plot(sdf_values)
         writer.add_figure(prefix + 'yz_sdf_slice', fig, global_step=epoch)
 
         xz_slice_coords = torch.cat((slice_coords_2d[:, :1],
                                      torch.zeros_like(slice_coords_2d[:, :1]),
-                                     slice_coords_2d[:, -1:]), dim=-1)[None, ...].cuda()
+                                     slice_coords_2d[:, -1:]), dim=-1).cuda()
 
         xz_model_out = model(xz_slice_coords)
-        sdf_values = dataio.lin2img(xz_model_out).squeeze().cpu().numpy()
+        sdf_values = xz_model_out['model_out']
+        sdf_values = dataio.lin2img_shape(xz_model_out).squeeze().cpu().numpy()
         fig = make_contour_plot(sdf_values)
         writer.add_figure(prefix + 'xz_sdf_slice', fig, global_step=epoch)
 
         xy_slice_coords = torch.cat((slice_coords_2d[:, :2],
-                                     torch.zeros_like(slice_coords_2d[:, :1])), dim=-1)[None, ...].cuda()
+                                     torch.zeros_like(slice_coords_2d[:, :1])), dim=-1).cuda()
 
         xy_model_out = model(xy_slice_coords)
-        sdf_values = dataio.lin2img(xy_model_out).squeeze().cpu().numpy()
+        sdf_values = xy_model_out['model_out']
+        sdf_values = dataio.lin2img_shape(xy_model_out).squeeze().cpu().numpy()
         fig = make_contour_plot(sdf_values)
         writer.add_figure(prefix + 'xy_sdf_slice', fig, global_step=epoch)
 
