@@ -1,3 +1,5 @@
+import matplotlib as mpl
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -301,7 +303,6 @@ def write_sdf_summary_shape(model, writer, epoch, prefix):
                                      slice_coords_2d[:, -1:]), dim=-1).cuda()
 
         xz_model_out = model(xz_slice_coords)
-        sdf_values = xz_model_out['model_out']
         sdf_values = dataio.lin2img_shape(xz_model_out).squeeze().cpu().numpy()
         fig = make_contour_plot(sdf_values)
         writer.add_figure(prefix + 'xz_sdf_slice', fig, global_step=epoch)
@@ -310,7 +311,6 @@ def write_sdf_summary_shape(model, writer, epoch, prefix):
                                      torch.zeros_like(slice_coords_2d[:, :1])), dim=-1).cuda()
 
         xy_model_out = model(xy_slice_coords)
-        sdf_values = xy_model_out['model_out']
         sdf_values = dataio.lin2img_shape(xy_model_out).squeeze().cpu().numpy()
         fig = make_contour_plot(sdf_values)
         writer.add_figure(prefix + 'xy_sdf_slice', fig, global_step=epoch)
