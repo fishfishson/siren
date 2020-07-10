@@ -12,7 +12,7 @@ import utils
 import sdf_meshing
 import configargparse
 import torch
-from functools import partial
+from torch.utils.tensorboard import SummaryWriter
 
 p = configargparse.ArgumentParser()
 p.add('-c', '--config_filepath', required=False, is_config_file=True, help='Path to config file.')
@@ -24,7 +24,7 @@ p.add_argument('--experiment_name', type=str, required=True,
 # General training options
 p.add_argument('--model_type', type=str, default='sine',
                help='Options are "sine" (all sine activations) and "mixed" (first layer sine, other layers tanh)')
-p.add_argument('--latent_dim', type=int, default=64)
+p.add_argument('--latent_dim', type=int, default=128)
 
 opt = p.parse_args()
 
@@ -38,11 +38,12 @@ class SDFDecoder(torch.nn.Module):
         self.model.load_state_dict(all_model['model'])
         self.embed = torch.nn.Embedding(opt.num_data, opt.latent_dim)
         self.embed.load_state_dict(torch.load(all_model['lat_vecs']))
+        self.epoch = all_model['epoch']
         self.embed.cuda()
         self.model.cuda()
         self.idx = None
 
-    def load_idx(self, idx):
+    def set_idx(self, idx):
         self.idx = torch.tensor(idx).cuda()
 
     def forward(self, coords):
@@ -53,12 +54,15 @@ class SDFDecoder(torch.nn.Module):
 
 
 def main(opt):
+    root_path = os.path.join(opt.logging_root, opt.experiment_name, 'rec')
+    writer = SummaryWriter(root_path)
     for i in range(opt.num_data):
+        print('Process {} th data!'.format(i + 1))
         sdf_decoder = SDFDecoder(opt)
-        sdf_decoder.load_idx(i)
-        root_path = os.path.join(opt.logging_root, opt.experiment_name, 'rec')
+        sdf_decoder.set_idx(i)
         utils.cond_mkdir(root_path)
         sdf_meshing.create_mesh(sdf_decoder, os.path.join(root_path, 'rec_{}'.format(i)), N=256)
+        utils.write_sdf_summary_shape(sdf_decoder, sdf_decoder.embed(sdf_decoder.idx), writer, sdf_decoder.epoch, 'rec_{}'.format(i))
 
 
 if __name__ == '__main__':

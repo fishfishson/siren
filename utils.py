@@ -284,13 +284,11 @@ def write_sdf_summary(model, model_input, gt, model_output, writer, total_steps,
         min_max_summary(prefix + 'coords', model_input['coords'], writer, total_steps)
 
 
-def write_sdf_summary_shape(model, model_input, model_output, writer, epoch, prefix='train_'):
-    prefix = prefix + str(epoch) + '_'
+def write_sdf_summary_shape(model, latent, writer, epoch, prefix):
     slice_coords_2d = dataio.get_mgrid(512)
+    model.eval()
 
     with torch.no_grad():
-        latent = model_input['latent']
-
         yz_slice_coords = torch.cat((torch.zeros_like(slice_coords_2d[:, :1]), slice_coords_2d), dim=-1)
         yz_slice_model_input = {'coords': yz_slice_coords.cuda()[None, ...], 'latent': latent}
 
@@ -311,7 +309,8 @@ def write_sdf_summary_shape(model, model_input, model_output, writer, epoch, pre
         fig = make_contour_plot(sdf_values)
         writer.add_figure(prefix + 'xz_sdf_slice', fig, global_step=epoch)
 
-        xy_slice_coords = torch.cat((slice_coords_2d[:, :2], torch.ones_like(slice_coords_2d[:, :1])), dim=-1)
+        xy_slice_coords = torch.cat((slice_coords_2d[:, :2],
+                                     torch.zeros_like(slice_coords_2d[:, :1])), dim=-1)
         xy_slice_model_input = {'coords': xy_slice_coords.cuda()[None, ...], 'latent': latent}
 
         xy_model_out = model(xy_slice_model_input)
@@ -319,9 +318,6 @@ def write_sdf_summary_shape(model, model_input, model_output, writer, epoch, pre
         sdf_values = dataio.lin2img(sdf_values).squeeze().cpu().numpy()
         fig = make_contour_plot(sdf_values)
         writer.add_figure(prefix + 'xy_sdf_slice', fig, global_step=epoch)
-
-        min_max_summary(prefix + 'model_out_min_max', model_output['model_out'], writer, epoch)
-        min_max_summary(prefix + 'coords', model_input['coords'], writer, epoch)
 
 
 def hypernet_activation_summary(model, model_input, gt, model_output, writer, total_steps, prefix='train_'):
