@@ -284,15 +284,14 @@ def write_sdf_summary(model, model_input, gt, model_output, writer, total_steps,
         min_max_summary(prefix + 'coords', model_input['coords'], writer, total_steps)
 
 
-def write_sdf_summary_shape(model, latent, writer, epoch, prefix):
+def write_sdf_summary_shape(model, writer, epoch, prefix):
     slice_coords_2d = dataio.get_mgrid(512)
     model.eval()
 
     with torch.no_grad():
-        yz_slice_coords = torch.cat((torch.zeros_like(slice_coords_2d[:, :1]), slice_coords_2d), dim=-1)
-        yz_slice_model_input = {'coords': yz_slice_coords.cuda()[None, ...], 'latent': latent}
+        yz_slice_coords = torch.cat((torch.zeros_like(slice_coords_2d[:, :1]), slice_coords_2d), dim=-1).cuda()
 
-        yz_model_out = model(yz_slice_model_input)
+        yz_model_out = model(yz_slice_coords)
         sdf_values = yz_model_out['model_out']
         sdf_values = dataio.lin2img(sdf_values).squeeze().cpu().numpy()
         fig = make_contour_plot(sdf_values)
@@ -300,20 +299,18 @@ def write_sdf_summary_shape(model, latent, writer, epoch, prefix):
 
         xz_slice_coords = torch.cat((slice_coords_2d[:, :1],
                                      torch.zeros_like(slice_coords_2d[:, :1]),
-                                     slice_coords_2d[:, -1:]), dim=-1)
-        xz_slice_model_input = {'coords': xz_slice_coords.cuda()[None, ...], 'latent': latent}
+                                     slice_coords_2d[:, -1:]), dim=-1).cuda()
 
-        xz_model_out = model(xz_slice_model_input)
+        xz_model_out = model(xz_slice_coords)
         sdf_values = xz_model_out['model_out']
         sdf_values = dataio.lin2img(sdf_values).squeeze().cpu().numpy()
         fig = make_contour_plot(sdf_values)
         writer.add_figure(prefix + 'xz_sdf_slice', fig, global_step=epoch)
 
         xy_slice_coords = torch.cat((slice_coords_2d[:, :2],
-                                     torch.zeros_like(slice_coords_2d[:, :1])), dim=-1)
-        xy_slice_model_input = {'coords': xy_slice_coords.cuda()[None, ...], 'latent': latent}
+                                     torch.zeros_like(slice_coords_2d[:, :1])), dim=-1).cuda()
 
-        xy_model_out = model(xy_slice_model_input)
+        xy_model_out = model(xy_slice_coords)
         sdf_values = xy_model_out['model_out']
         sdf_values = dataio.lin2img(sdf_values).squeeze().cpu().numpy()
         fig = make_contour_plot(sdf_values)

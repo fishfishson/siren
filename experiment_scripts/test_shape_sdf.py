@@ -56,14 +56,14 @@ class SDFDecoder(torch.nn.Module):
 
 def main(opt):
     root_path = os.path.join(opt.logging_root, opt.experiment_name, 'rec')
+    utils.cond_mkdir(root_path)
     writer = SummaryWriter(root_path)
     for i in range(opt.num_data):
         print('Process {} th data!'.format(i + 1))
         sdf_decoder = SDFDecoder(opt)
         sdf_decoder.set_idx(i)
-        utils.cond_mkdir(root_path)
         sdf_meshing.create_mesh(sdf_decoder, os.path.join(root_path, 'rec_{}'.format(i)), N=256)
-        utils.write_sdf_summary_shape(sdf_decoder, sdf_decoder.embed(sdf_decoder.idx), writer, sdf_decoder.epoch, 'rec_{}'.format(i))
+        utils.write_sdf_summary_shape(sdf_decoder, writer, sdf_decoder.epoch, 'rec_{}'.format(i))
 
 
 if __name__ == '__main__':
