@@ -38,7 +38,7 @@ class SDFDecoder(torch.nn.Module):
         self.model = modules.SingleBVPNet(type=opt.model_type, out_features=1, in_features=opt.latent_dim + 3)
         self.model.load_state_dict(all_model['model'])
         self.embed = torch.nn.Embedding(opt.num_data, opt.latent_dim)
-        self.embed.load_state_dict(torch.load(all_model['lat_vecs']))
+        self.embed.load_state_dict(all_model['lat_vecs'])
         self.epoch = all_model['epoch']
         self.embed.cuda()
         self.model.cuda()
