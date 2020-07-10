@@ -34,7 +34,7 @@ class SDFDecoder(torch.nn.Module):
     def __init__(self, opt):
         super().__init__()
         # Define the model.
-        all_model = torch.load(os.path.join(opt.logging_root, opt.experiment_name, 'checkpoints/all_final.path'))
+        all_model = torch.load(os.path.join(opt.logging_root, opt.experiment_name, 'checkpoints/all_final.pth'))
         self.model = modules.SingleBVPNet(type=opt.model_type, out_features=1, in_features=opt.latent_dim + 3)
         self.model.load_state_dict(all_model['model'])
         self.embed = torch.nn.Embedding(opt.num_data, opt.latent_dim)
