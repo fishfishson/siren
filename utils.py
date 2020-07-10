@@ -289,7 +289,8 @@ def write_sdf_summary_shape(model, writer, epoch, prefix):
     model.eval()
 
     with torch.no_grad():
-        yz_slice_coords = torch.cat((torch.zeros_like(slice_coords_2d[:, :1]), slice_coords_2d), dim=-1).cuda()
+        yz_slice_coords = torch.cat((torch.zeros_like(slice_coords_2d[:, :1]),
+                                     slice_coords_2d), dim=-1)[None, ...].cuda()
 
         yz_model_out = model(yz_slice_coords)
         sdf_values = dataio.lin2img(yz_model_out).squeeze().cpu().numpy()
@@ -298,7 +299,7 @@ def write_sdf_summary_shape(model, writer, epoch, prefix):
 
         xz_slice_coords = torch.cat((slice_coords_2d[:, :1],
                                      torch.zeros_like(slice_coords_2d[:, :1]),
-                                     slice_coords_2d[:, -1:]), dim=-1).cuda()
+                                     slice_coords_2d[:, -1:]), dim=-1)[None, ...].cuda()
 
         xz_model_out = model(xz_slice_coords)
         sdf_values = dataio.lin2img(xz_model_out).squeeze().cpu().numpy()
@@ -306,7 +307,7 @@ def write_sdf_summary_shape(model, writer, epoch, prefix):
         writer.add_figure(prefix + 'xz_sdf_slice', fig, global_step=epoch)
 
         xy_slice_coords = torch.cat((slice_coords_2d[:, :2],
-                                     torch.zeros_like(slice_coords_2d[:, :1])), dim=-1).cuda()
+                                     torch.zeros_like(slice_coords_2d[:, :1])), dim=-1)[None, ...].cuda()
 
         xy_model_out = model(xy_slice_coords)
         sdf_values = dataio.lin2img(xy_model_out).squeeze().cpu().numpy()
